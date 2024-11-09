@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Summarizer Service</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .container {
+            margin-top: 50px;
+        }
+        .card {
+            margin-bottom: 20px;
+        }
+        .form-group {
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="text-center">Summarizer Service</h1>
+        <div class="card">
+            <div class="card-header">
+                <h2>Text Summarizer</h2>
+            </div>
+            <div class="card-body">
+                <form id="text-summarizer-form">
+                    <div class="form-group">
+                        <label for="summary-mode">Summary Mode:</label>
+                        <select class="form-control" id="summary-mode" name="summary_mode">
+                            <option value="abstractive">Abstractive</option>
+                            <option value="extractive">Extractive</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="summary-type">Summary Type:</label>
+                        <select class="form-control" id="summary-type" name="summary_type">
+                            <option value="paragraph">Paragraph</option>
+                            <option value="bullets">Bullet Points</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="text">Text:</label>
+                        <textarea class="form-control" id="text" name="text" rows="5" required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Summarize Text</button>
+                </form>
+                <div class="mt-4" id="text-summary-result" style="display:none;">
+                    <h4>Summary</h4>
+                    <p id="text-summary"></p>
+                    <p id="text-input-length"></p>
+                    <p id="text-output-length"></p>
+                    <p id="text-accuracy"></p>
+                </div>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-header">
+                <h2>Document Summarizer</h2>
+            </div>
+            <div class="card-body">
+                <form id="document-summarizer-form">
+                    <div class="form-group">
+                        <label for="doc-summary-mode">Summary Mode:</label>
+                        <select class="form-control" id="doc-summary-mode" name="summary_mode">
+                            <option value="abstractive">Abstractive</option>
+                            <option value="extractive">Extractive</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="doc-summary-type">Summary Type:</label>
+                        <select class="form-control" id="doc-summary-type" name="summary_type">
+                            <option value="paragraph">Paragraph</option>
+                            <option value="bullets">Bullet Points</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="document">Upload Document:</label>
+                        <input type="file" class="form-control-file" id="document" name="document" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Summarize Document</button>
+                </form>
+                <div class="mt-4" id="document-summary-result" style="display:none;">
+                    <h4>Summary</h4>
+                    <p id="document-summary"></p>
+                    <p id="document-input-length"></p>
+                    <p id="document-output-length"></p>
+                    <p id="document-accuracy"></p>
+                </div>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-header">
+                <h2>Video Summarizer</h2>
+            </div>
+            <div class="card-body">
+                <form id="video-summarizer-form">
+                    <div class="form-group">
+                        <label for="video-url">YouTube Video URL:</label>
+                        <input type="url" class="form-control" id="video-url" name="video_url" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Summarize Video</button>
+                </form>
+                <div class="mt-4" id="video-summary-result" style="display:none;">
+                    <h4>Summary</h4>
+                    <p id="video-summary"></p>
+                    <p id="video-input-length"></p>
+                    <p id="video-output-length"></p>
+                    <p id="video-accuracy"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            $('#text-summarizer-form').submit(function (event) {
+                event.preventDefault();
+                const formData = {
+                    text: $('#text').val(),
+                    summary_type: $('#summary-type').val(),
+                    summary_mode: $('#summary-mode').val()
+                };
+                $.ajax({
+                    url: '/summarize_text',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(formData),
+                    success: function (data) {
+                        $('#text-summary-result').show();
+                        $('#text-summary').text(data.summary);
+                        $('#text-input-length').text('Input Length - Words: ' + data.input_length.words + ', Sentences: ' + data.input_length.sentences);
+                        $('#text-output-length').text('Output Length - Words: ' + data.output_length.words + ', Sentences: ' + data.output_length.sentences);
+                        $('#text-accuracy').text('Accuracy: ' + data.accuracy.toFixed(2) + '%');
+                    }
+                });
+            });
+
+            $('#document-summarizer-form').submit(function (event) {
+                event.preventDefault();
+                const formData = new FormData();
+                formData.append('document', $('#document')[0].files[0]);
+                formData.append('summary_type', $('#doc-summary-type').val());
+                formData.append('summary_mode', $('#doc-summary-mode').val());
+                $.ajax({
+                    url: '/summarize_document',
+                    type: 'POST',
+                    contentType: false,
+                    processData: false,
+                    data: formData,
+                    success: function (data) {
+                        $('#document-summary-result').show();
+                        $('#document-summary').text(data.summary);
+                        $('#document-input-length').text('Input Length - Words: ' + data.input_length.words + ', Sentences: ' + data.input_length.sentences);
+                        $('#document-output-length').text('Output Length - Words: ' + data.output_length.words + ', Sentences: ' + data.output_length.sentences);
+                        $('#document-accuracy').text('Accuracy: ' + data.accuracy.toFixed(2) + '%');
+                    }
+                });
+            });
+
+            $('#video-summarizer-form').submit(function (event) {
+                event.preventDefault();
+                const formData = {
+                    video_url: $('#video-url').val()
+                };
+                $.ajax({
+                    url: '/summarize_video',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(formData),
+                    success: function (data) {
+                        $('#video-summary-result').show();
+                        $('#video-summary').text(data.text_summary);
+                        $('#video-input-length').text('Input Length - Words: ' + data.input_length.words + ', Sentences: ' + data.input_length.sentences);
+                        $('#video-output-length').text('Output Length - Words: ' + data.output_length.words + ', Sentences: ' + data.output_length.sentences);
+                        $('#video-accuracy').text('Accuracy: ' + data.accuracy.toFixed(2) + '%');
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
